@@ -1,6 +1,6 @@
 # CPU Task Handler
 
-A C++17 command-line simulation of non-preemptive priority CPU scheduling.
+simulates the operating system’s CPU scheduler—the part of the OS that chooses which app or process gets to use the processor first based on priority, then tracks its runtime and memory use.
 
 ## Install and run
 
