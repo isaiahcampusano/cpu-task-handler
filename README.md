@@ -1,32 +1,41 @@
 # CPU Task Handler
 
-A C++17 command-line simulation showing how an operating system schedules
-processes. Chrome, VS Code, Discord, and Spotify are modeled with priorities,
-memory footprints, and CPU burst times.
+A C++17 command-line simulation of non-preemptive priority CPU scheduling.
 
-The scheduler uses **non-preemptive priority scheduling**: high-priority
-processes run first, and PID/arrival order breaks priority ties. Each process
-runs to completion while the simulation reports progress in 100 ms intervals.
+## Install and run
 
-## Build and run
+Windows PowerShell:
 
-```sh
-cmake -S . -B build
-cmake --build build
-./build/cpu-task-handler
+```powershell
+winget install --exact --id BrechtSanders.WinLibs.POSIX.UCRT --accept-package-agreements --accept-source-agreements
 ```
 
-On multi-config generators such as Visual Studio, run the executable from the
-selected configuration directory (for example, `build/Debug`).
+Restart VS Code after installation, open the project folder, and run:
 
-## Sample processes
+```powershell
+cmake -S . -B build
+cmake --build build
+.\build\cpu-task-handler.exe
+```
 
-| Process | Priority | Memory | Runtime |
-| --- | --- | ---: | ---: |
-| Chrome | High | 512 MB | 5000 ms |
-| VS Code | High | 300 MB | 6000 ms |
-| Discord | Medium | 256 MB | 4000 ms |
-| Spotify | Medium | 128 MB | 3000 ms |
+## Controls
 
-The final report includes total simulation time, CPU idle time, and each
-process's turnaround time.
+- Run the simulation: `.\build\cpu-task-handler.exe`
+- Rebuild after changes: `cmake --build build`
+- Stop a running command: `Ctrl+C`
+- Change sample processes: edit `create_sample_processes()` in `src/process.cpp`
+- Change the 100 ms interval: edit `time_interval` in `include/scheduler.h`
+
+## Roadmap
+
+- Add round-robin scheduling and a selectable scheduling mode
+- Add process arrival and waiting times
+- Add automated scheduler tests
+- Support configurable input and CSV timeline export
+
+## Ecosystem
+
+- C++17
+- CMake
+- GCC/MinGW on Windows
+- No external runtime dependencies
