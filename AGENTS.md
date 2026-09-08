@@ -10,4 +10,7 @@ advances in 100 ms intervals and reports its execution timeline, memory use,
 and final turnaround statistics.
 
 Build with CMake and enable compiler warnings. Do not add external
-dependencies, a GUI, or real multithreading.
+dependencies or real multithreading. Keep the optional GitHub Pages demo in
+`site/`; it must remain a dependency-free static visualization, visibly label
+all generated values as simulated, and never access or claim to access live
+system telemetry. Do not add a GUI framework or backend service.
