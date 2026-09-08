@@ -2,7 +2,7 @@
 
 CPU Task Handler is a C++17 simulation of the part of an operating system that chooses which process gets CPU time. It orders sample processes by priority, advances them in 100 ms intervals, and reports runtime and memory statistics.
 
-The repository also includes a static, Windows Task Manager-inspired [performance dashboard](https://isaiahcampusano.github.io/cpu-task-handler/site/index.html). The dashboard is a visual demo: every displayed CPU, memory, disk, and network value is generated in the browser and is **not live system telemetry**.
+The repository also includes a static, Windows Task Manager-inspired [performance dashboard](https://isaiahcampusano.github.io/cpu-task-handler/). The dashboard is a visual demo: every displayed CPU, memory, disk, and network value is generated in the browser and is **not live system telemetry**.
 
 
 <img width="1067" height="575" alt="image" src="https://github.com/user-attachments/assets/a7d69fce-3615-467e-8ce9-8e77d23bbd83" />
@@ -12,10 +12,11 @@ The repository also includes a static, Windows Task Manager-inspired [performanc
 Windows PowerShell:
 
 ```powershell
+winget install --exact --id Kitware.CMake --accept-package-agreements --accept-source-agreements
 winget install --exact --id BrechtSanders.WinLibs.POSIX.UCRT --accept-package-agreements --accept-source-agreements
 ```
 
-Restart VS Code after installation, open the project folder, and run:
+Restart VS Code after installing CMake and the compiler, open the project folder, and run:
 
 ```powershell
 cmake -S . -B build
@@ -39,13 +40,11 @@ The orange **Simulated Demo Data — Not Live System Telemetry** notice stays vi
 
 ## Publish with GitHub Pages
 
-The `Deploy dashboard to Pages` workflow publishes only the contents of `site/` whenever a change reaches `main`. Before the first deployment:
+GitHub Pages is configured to use GitHub Actions. The `Deploy dashboard to Pages` workflow publishes only the contents of `site/` whenever a dashboard or deployment-workflow change reaches `main`.
 
-1. Open **Settings → Pages** in the GitHub repository.
-2. Set **Source** to **GitHub Actions**.
-3. Merge or push a dashboard change to `main`, or manually run the deployment from the **Actions** tab.
+To redeploy without making a change, manually run **Deploy dashboard to Pages** from the repository's **Actions** tab. Do not switch the Pages source to branch publishing; the workflow maps `site/` to the site's root URL.
 
-The published dashboard will be available at <https://isaiahcampusano.github.io/cpu-task-handler/> after the workflow completes.
+The dashboard is live at <https://isaiahcampusano.github.io/cpu-task-handler/>.
 
 ## Roadmap
 
