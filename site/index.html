@@ -1,0 +1,659 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="A transparent, simulated Task Manager performance dashboard for the CPU Task Handler project.">
+  <title>CPU Task Handler — Performance Demo</title>
+  <style>
+    :root {
+      color-scheme: light;
+      font-family: "Segoe UI", system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+      --accent: #0f6cbd;
+      --accent-soft: #e5f1fb;
+      --memory: #b35c00;
+      --disk: #107c10;
+      --ink: #1b1b1b;
+      --muted: #616161;
+      --line: #d9d9d9;
+      --surface: #ffffff;
+      --canvas: #f3f3f3;
+      --sidebar: #202020;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html,
+    body {
+      min-height: 100%;
+      margin: 0;
+    }
+
+    body {
+      background: var(--canvas);
+      color: var(--ink);
+    }
+
+    .app-shell {
+      display: grid;
+      grid-template-columns: 250px minmax(0, 1fr);
+      min-height: 100vh;
+    }
+
+    .sidebar {
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+      padding: 22px 12px;
+      background: var(--sidebar);
+      color: #ededed;
+    }
+
+    .app-title {
+      padding: 0 12px 22px;
+      border-bottom: 1px solid #363636;
+      font-size: 15px;
+      font-weight: 650;
+      letter-spacing: 0.02em;
+    }
+
+    .app-title span {
+      color: #a5a5a5;
+      font-weight: 400;
+    }
+
+    .nav-list {
+      display: grid;
+      gap: 4px;
+      margin: 14px 0 0;
+      padding: 0;
+      list-style: none;
+    }
+
+    .nav-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      min-height: 42px;
+      padding: 8px 12px;
+      border-left: 3px solid transparent;
+      border-radius: 4px;
+      color: #c8c8c8;
+      font-size: 14px;
+    }
+
+    .nav-item[aria-current="page"] {
+      border-left-color: #60cdff;
+      background: #303030;
+      color: #fff;
+    }
+
+    .nav-icon {
+      width: 20px;
+      text-align: center;
+    }
+
+    .sidebar-note {
+      margin-top: auto;
+      padding: 16px 12px 0;
+      border-top: 1px solid #363636;
+      color: #aaa;
+      font-size: 12px;
+      line-height: 1.5;
+    }
+
+    main {
+      min-width: 0;
+      padding: 28px clamp(20px, 4vw, 48px) 32px;
+    }
+
+    .topline,
+    .page-heading,
+    .card-heading,
+    .metric-row,
+    .footer {
+      display: flex;
+      align-items: center;
+    }
+
+    .topline {
+      justify-content: space-between;
+      gap: 16px;
+      margin-bottom: 20px;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .menu-labels {
+      display: flex;
+      gap: 22px;
+    }
+
+    .demo-notice {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      max-width: 100%;
+      padding: 7px 12px;
+      border: 1px solid #c2410c;
+      border-radius: 999px;
+      background: #fff4ed;
+      color: #8a2908;
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 0.01em;
+    }
+
+    .demo-notice::before {
+      width: 8px;
+      height: 8px;
+      flex: 0 0 auto;
+      border-radius: 50%;
+      background: #c2410c;
+      content: "";
+    }
+
+    .page-heading {
+      justify-content: space-between;
+      gap: 18px;
+      padding-bottom: 14px;
+      border-bottom: 1px solid var(--line);
+    }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(26px, 4vw, 38px);
+      font-weight: 450;
+      letter-spacing: -0.02em;
+    }
+
+    .history-label {
+      flex: 0 0 auto;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .dashboard-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 18px;
+      margin-top: 20px;
+    }
+
+    .card {
+      min-width: 0;
+      padding: 22px;
+      border: 1px solid #e1e1e1;
+      border-radius: 9px;
+      background: var(--surface);
+      box-shadow: 0 1px 3px rgb(0 0 0 / 8%);
+    }
+
+    .card-heading {
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 14px;
+    }
+
+    .card h2 {
+      overflow: hidden;
+      margin: 0;
+      font-size: 15px;
+      font-weight: 650;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .badge {
+      flex: 0 0 auto;
+      padding: 3px 9px;
+      border-radius: 999px;
+      background: #f1f1f1;
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .reading {
+      display: flex;
+      align-items: baseline;
+      gap: 5px;
+      min-height: 55px;
+    }
+
+    .reading-value {
+      font-size: clamp(36px, 6vw, 48px);
+      font-weight: 300;
+      font-variant-numeric: tabular-nums;
+      letter-spacing: -0.04em;
+      line-height: 1;
+    }
+
+    .reading-unit {
+      color: var(--muted);
+      font-size: 17px;
+    }
+
+    .progress-track {
+      height: 8px;
+      margin-top: 13px;
+      overflow: hidden;
+      border-radius: 4px;
+      background: #e9e9e9;
+    }
+
+    .progress-fill {
+      width: 0;
+      height: 100%;
+      border-radius: inherit;
+      background: var(--accent);
+      transition: width 700ms cubic-bezier(0.2, 0.9, 0.4, 1);
+    }
+
+    .progress-fill.memory {
+      background: var(--memory);
+    }
+
+    .progress-fill.disk {
+      background: var(--disk);
+    }
+
+    .sparkline-wrap {
+      height: 76px;
+      margin-top: 14px;
+      overflow: hidden;
+      border: 1px solid #d7e8f7;
+      border-radius: 5px;
+      background: linear-gradient(180deg, #f8fcff, #eef7ff);
+    }
+
+    canvas {
+      display: block;
+      width: 100%;
+      height: 100%;
+    }
+
+    .details {
+      display: grid;
+      gap: 8px;
+      margin: 14px 0 0;
+    }
+
+    .metric-row {
+      justify-content: space-between;
+      gap: 16px;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .metric-row dd,
+    .metric-row dt {
+      margin: 0;
+    }
+
+    .metric-row dd {
+      color: #333;
+      font-variant-numeric: tabular-nums;
+      text-align: right;
+    }
+
+    .footer {
+      flex-wrap: wrap;
+      gap: 10px 22px;
+      margin-top: 22px;
+      padding-top: 16px;
+      border-top: 1px solid var(--line);
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .footer strong {
+      color: #333;
+      font-weight: 600;
+    }
+
+    .update-time {
+      margin-left: auto;
+      font-variant-numeric: tabular-nums;
+    }
+
+    @media (max-width: 900px) {
+      .app-shell {
+        grid-template-columns: 190px minmax(0, 1fr);
+      }
+
+      main {
+        padding-inline: 22px;
+      }
+
+      .dashboard-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media (max-width: 620px) {
+      .app-shell {
+        display: block;
+      }
+
+      .sidebar {
+        min-height: auto;
+        padding: 14px 16px;
+      }
+
+      .app-title {
+        padding: 0;
+        border: 0;
+      }
+
+      .nav-list,
+      .sidebar-note,
+      .menu-labels {
+        display: none;
+      }
+
+      main {
+        padding: 18px 14px 26px;
+      }
+
+      .topline {
+        justify-content: flex-start;
+      }
+
+      .demo-notice {
+        border-radius: 7px;
+      }
+
+      .page-heading {
+        align-items: flex-end;
+      }
+
+      .card {
+        padding: 18px;
+      }
+
+      .update-time {
+        width: 100%;
+        margin-left: 0;
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *,
+      *::before,
+      *::after {
+        scroll-behavior: auto !important;
+        transition-duration: 0.01ms !important;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="sidebar" aria-label="Task Manager sections">
+      <div class="app-title">CPU Task Handler <span>Demo</span></div>
+      <ul class="nav-list">
+        <li class="nav-item"><span class="nav-icon" aria-hidden="true">▦</span>Processes</li>
+        <li class="nav-item" aria-current="page"><span class="nav-icon" aria-hidden="true">⌁</span>Performance</li>
+        <li class="nav-item"><span class="nav-icon" aria-hidden="true">◴</span>App history</li>
+        <li class="nav-item"><span class="nav-icon" aria-hidden="true">↗</span>Startup apps</li>
+        <li class="nav-item"><span class="nav-icon" aria-hidden="true">♙</span>Users</li>
+        <li class="nav-item"><span class="nav-icon" aria-hidden="true">≡</span>Details</li>
+        <li class="nav-item"><span class="nav-icon" aria-hidden="true">⚙</span>Services</li>
+      </ul>
+      <div class="sidebar-note">Visual demonstration only. This page cannot inspect your device.</div>
+    </aside>
+
+    <main>
+      <div class="topline">
+        <div class="menu-labels" aria-hidden="true"><span>File</span><span>Options</span><span>View</span></div>
+        <div class="demo-notice" id="demo-notice" role="status">Simulated Demo Data — Not Live System Telemetry</div>
+      </div>
+
+      <header class="page-heading">
+        <h1>Performance</h1>
+        <span class="history-label">Last 30 seconds</span>
+      </header>
+
+      <section class="dashboard-grid" aria-label="Simulated performance metrics">
+        <article class="card">
+          <div class="card-heading">
+            <h2>CPU</h2>
+            <span class="badge" id="cpu-frequency">3.42 GHz</span>
+          </div>
+          <div class="reading">
+            <span class="reading-value" id="cpu-value">28</span>
+            <span class="reading-unit">%</span>
+          </div>
+          <div class="progress-track" role="meter" aria-label="Simulated CPU usage" aria-valuemin="0" aria-valuemax="100" aria-valuenow="28">
+            <div class="progress-fill" id="cpu-bar"></div>
+          </div>
+          <div class="sparkline-wrap">
+            <canvas id="cpu-chart" aria-label="Simulated CPU usage over the last 30 seconds" role="img"></canvas>
+          </div>
+        </article>
+
+        <article class="card">
+          <div class="card-heading">
+            <h2>Memory</h2>
+            <span class="badge" id="memory-summary">8.9 / 16.0 GB</span>
+          </div>
+          <div class="reading">
+            <span class="reading-value" id="memory-value">56</span>
+            <span class="reading-unit">%</span>
+          </div>
+          <div class="progress-track" role="meter" aria-label="Simulated memory usage" aria-valuemin="0" aria-valuemax="100" aria-valuenow="56">
+            <div class="progress-fill memory" id="memory-bar"></div>
+          </div>
+          <dl class="details">
+            <div class="metric-row"><dt>In use</dt><dd id="memory-used">8.9 GB</dd></div>
+            <div class="metric-row"><dt>Available</dt><dd id="memory-available">7.1 GB</dd></div>
+          </dl>
+        </article>
+
+        <article class="card">
+          <div class="card-heading">
+            <h2>Disk 0 (C:)</h2>
+            <span class="badge">SSD</span>
+          </div>
+          <div class="reading">
+            <span class="reading-value" id="disk-value">4</span>
+            <span class="reading-unit">%</span>
+          </div>
+          <div class="progress-track" role="meter" aria-label="Simulated disk activity" aria-valuemin="0" aria-valuemax="100" aria-valuenow="4">
+            <div class="progress-fill disk" id="disk-bar"></div>
+          </div>
+          <dl class="details">
+            <div class="metric-row"><dt>Active time</dt><dd id="disk-active">4%</dd></div>
+            <div class="metric-row"><dt>Read/write speed</dt><dd id="disk-throughput">0.2 MB/s</dd></div>
+          </dl>
+        </article>
+
+        <article class="card">
+          <div class="card-heading">
+            <h2>Ethernet</h2>
+            <span class="badge">Throughput</span>
+          </div>
+          <div class="reading">
+            <span class="reading-value" id="network-value">113</span>
+            <span class="reading-unit">Kbps</span>
+          </div>
+          <dl class="details">
+            <div class="metric-row"><dt>Send</dt><dd id="network-send">42 Kbps</dd></div>
+            <div class="metric-row"><dt>Receive</dt><dd id="network-receive">71 Kbps</dd></div>
+          </dl>
+        </article>
+      </section>
+
+      <footer class="footer">
+        <span><strong>Demo mode</strong></span>
+        <span>Generated values update every second</span>
+        <span class="update-time" id="update-time">Updated just now</span>
+      </footer>
+    </main>
+  </div>
+
+  <script>
+    (() => {
+      "use strict";
+
+      const HISTORY_LENGTH = 30;
+      const TOTAL_MEMORY_GB = 16;
+      const clamp = (value, minimum, maximum) => Math.min(maximum, Math.max(minimum, value));
+      const integer = (minimum, maximum) => Math.round(minimum + Math.random() * (maximum - minimum));
+
+      const state = {
+        cpu: 28,
+        memory: 56,
+        disk: 4,
+        networkSend: 42,
+        networkReceive: 71,
+        frequency: 3.42,
+        cpuBurstTicks: 0,
+        history: Array(HISTORY_LENGTH).fill(28)
+      };
+
+      const elements = {
+        cpuValue: document.querySelector("#cpu-value"),
+        cpuBar: document.querySelector("#cpu-bar"),
+        cpuMeter: document.querySelector("#cpu-bar").parentElement,
+        cpuFrequency: document.querySelector("#cpu-frequency"),
+        memoryValue: document.querySelector("#memory-value"),
+        memoryBar: document.querySelector("#memory-bar"),
+        memoryMeter: document.querySelector("#memory-bar").parentElement,
+        memorySummary: document.querySelector("#memory-summary"),
+        memoryUsed: document.querySelector("#memory-used"),
+        memoryAvailable: document.querySelector("#memory-available"),
+        diskValue: document.querySelector("#disk-value"),
+        diskBar: document.querySelector("#disk-bar"),
+        diskMeter: document.querySelector("#disk-bar").parentElement,
+        diskActive: document.querySelector("#disk-active"),
+        diskThroughput: document.querySelector("#disk-throughput"),
+        networkValue: document.querySelector("#network-value"),
+        networkSend: document.querySelector("#network-send"),
+        networkReceive: document.querySelector("#network-receive"),
+        updateTime: document.querySelector("#update-time"),
+        chart: document.querySelector("#cpu-chart")
+      };
+
+      const chartContext = elements.chart.getContext("2d");
+
+      function advanceSimulation() {
+        if (state.cpuBurstTicks === 0 && Math.random() < 0.12) {
+          state.cpuBurstTicks = integer(2, 4);
+        }
+
+        if (state.cpuBurstTicks > 0) {
+          const burstTarget = integer(78, 97);
+          state.cpu += (burstTarget - state.cpu) * 0.62 + integer(-3, 3);
+          state.cpuBurstTicks -= 1;
+        } else {
+          const idleTarget = integer(9, 38);
+          state.cpu += (idleTarget - state.cpu) * 0.28 + integer(-4, 4);
+        }
+        state.cpu = Math.round(clamp(state.cpu, 5, 98));
+
+        const memoryTarget = integer(43, 69);
+        state.memory += (memoryTarget - state.memory) * 0.1 + (Math.random() - 0.5) * 1.6;
+        state.memory = Math.round(clamp(state.memory, 32, 82));
+
+        if (Math.random() < 0.16) {
+          state.disk = integer(42, 94);
+        } else {
+          state.disk = Math.round(clamp(state.disk * 0.58 + integer(0, 10), 1, 95));
+        }
+
+        const networkBurst = Math.random() < 0.18;
+        const networkCeiling = networkBurst ? 950 : 240;
+        state.networkSend = integer(8, Math.round(networkCeiling * 0.42));
+        state.networkReceive = integer(12, Math.round(networkCeiling * 0.58));
+        state.frequency = clamp(2.55 + state.cpu * 0.017 + (Math.random() - 0.5) * 0.18, 2.5, 4.2);
+
+        state.history.push(state.cpu);
+        state.history.shift();
+      }
+
+      function render() {
+        const memoryUsed = TOTAL_MEMORY_GB * state.memory / 100;
+        const memoryAvailable = TOTAL_MEMORY_GB - memoryUsed;
+        const networkTotal = state.networkSend + state.networkReceive;
+        const diskThroughput = clamp(state.disk / 25 + Math.random() * 0.25, 0.1, 4.2);
+
+        elements.cpuValue.textContent = state.cpu;
+        elements.cpuBar.style.width = `${state.cpu}%`;
+        elements.cpuMeter.setAttribute("aria-valuenow", state.cpu);
+        elements.cpuFrequency.textContent = `${state.frequency.toFixed(2)} GHz`;
+
+        elements.memoryValue.textContent = state.memory;
+        elements.memoryBar.style.width = `${state.memory}%`;
+        elements.memoryMeter.setAttribute("aria-valuenow", state.memory);
+        elements.memorySummary.textContent = `${memoryUsed.toFixed(1)} / ${TOTAL_MEMORY_GB.toFixed(1)} GB`;
+        elements.memoryUsed.textContent = `${memoryUsed.toFixed(1)} GB`;
+        elements.memoryAvailable.textContent = `${memoryAvailable.toFixed(1)} GB`;
+
+        elements.diskValue.textContent = state.disk;
+        elements.diskBar.style.width = `${state.disk}%`;
+        elements.diskMeter.setAttribute("aria-valuenow", state.disk);
+        elements.diskActive.textContent = `${state.disk}%`;
+        elements.diskThroughput.textContent = `${diskThroughput.toFixed(1)} MB/s`;
+
+        elements.networkValue.textContent = networkTotal;
+        elements.networkSend.textContent = `${state.networkSend} Kbps`;
+        elements.networkReceive.textContent = `${state.networkReceive} Kbps`;
+        elements.updateTime.textContent = `Updated ${new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" })}`;
+
+        drawChart();
+      }
+
+      function drawChart() {
+        const bounds = elements.chart.getBoundingClientRect();
+        const scale = window.devicePixelRatio || 1;
+        const width = Math.max(1, Math.round(bounds.width));
+        const height = Math.max(1, Math.round(bounds.height));
+
+        if (elements.chart.width !== Math.round(width * scale) || elements.chart.height !== Math.round(height * scale)) {
+          elements.chart.width = Math.round(width * scale);
+          elements.chart.height = Math.round(height * scale);
+        }
+
+        chartContext.setTransform(scale, 0, 0, scale, 0, 0);
+        chartContext.clearRect(0, 0, width, height);
+
+        chartContext.beginPath();
+        state.history.forEach((value, index) => {
+          const x = index / (HISTORY_LENGTH - 1) * width;
+          const y = height - value / 100 * (height - 8) - 4;
+          if (index === 0) chartContext.moveTo(x, y);
+          else chartContext.lineTo(x, y);
+        });
+        chartContext.strokeStyle = "#0f6cbd";
+        chartContext.lineWidth = 2;
+        chartContext.lineJoin = "round";
+        chartContext.stroke();
+
+        chartContext.lineTo(width, height);
+        chartContext.lineTo(0, height);
+        chartContext.closePath();
+        const gradient = chartContext.createLinearGradient(0, 0, 0, height);
+        gradient.addColorStop(0, "rgba(15, 108, 189, 0.22)");
+        gradient.addColorStop(1, "rgba(15, 108, 189, 0.02)");
+        chartContext.fillStyle = gradient;
+        chartContext.fill();
+      }
+
+      render();
+      window.setInterval(() => {
+        advanceSimulation();
+        render();
+      }, 1000);
+
+      if ("ResizeObserver" in window) {
+        new ResizeObserver(drawChart).observe(elements.chart.parentElement);
+      } else {
+        window.addEventListener("resize", drawChart);
+      }
+    })();
+  </script>
+</body>
+</html>
